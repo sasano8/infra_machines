@@ -34,94 +34,13 @@ EOF
 Vagrant ファイルを配置します。
 
 ```
-cp templates/setup Vagrant
+cp templates/primary Vagrantfile
 ```
-
-仮想マシンを起動します。
-この操作により、ホストオンリーネットワークと DHCP サーバーが作成されます。
-
-```
-vagrant up
-```
-
-仮想マシンのIPアドレスと dhcpserver の情報を確認します。
-
-```
-vagrant ssh -c "ip a"
-VBoxManage list dhcpservers
-```
-
-確認した情報を参考に、Wsl2 と Windows 上から ping で疎通できることを確認します。
-
-```
-ping 192.168.56.*
-```
-
-* VirutualBox ではデフォルトで 192.168.56.* のネットワークが作成されます。
-
-
-この仮想マシンは初期環境構築と疎通確認の目的を達成したので破棄します。
-
-```
-vagrant destroy
-rm Vagrantfile
-```
-
-
-# 仮想化マシンの構成を生成する
-
-https://portal.cloud.hashicorp.com/vagrant/discover?query=alpine
-
-
-Vagrant ファイルを配置します。
-
-```
-cp templates/setup Vagrant
-```
-
-ホストオンリーネットワークが存在しなければ作成します。
-
-```
-VBoxManage list hostonlyifs  # ホストオンリーネットワークの確認
-VBoxManage hostonlyif create
-```
-
-ホストオンリーネットワークを確認します。
-
-```
-VBoxManage list hostonlyifs
-```
-
-使用済みIPアドレスを確認します。
-`$_.IPAddress` のネットワークはホストオンリーネットワークで確認したネットワークで検索します。
-
-```
-# デフォルトゲートウェイ的な役割のIPが存在しているはず
-Get-NetIPAddress | Where-Object { $_.IPAddress -like "192.168.56.*" }
-```
-
-Vagrant ファイルに、未使用のホストオンリーネットワークのIPアドレスを指定します。
-IP は 99 以下を指定してください。
-VirtualBox により 100 は DHCP サーバー、 101 以上が DHCP 範囲となることがあります（IPを指定しない場合に建てられます）。
-
-```
-config.vm.network "private_network",
-    ip: "192.168.56.2"
-```
-
-
-# 仮想マシンの起動
 
 仮想マシンを起動します。
 
 ```
 vagrant up
-```
-
-以下のコマンドで仮想マシンにログインできることを確認します。
-
-```
-vagrant ssh
 ```
 
 疎通確認のため http サーバーを起動します。
@@ -135,3 +54,20 @@ WSL2 上、Windows 上、仮想マシン上から、CURL などで疎通確認�
 ```
 curl http://192.168.1.100:8080
 ```
+
+
+仮想マシンを破棄する場合は下記のコマンドを実行します。
+
+```
+vagrant destroy
+```
+
+# 既知の問題
+
+Vagrant で dhcp 構成のマシンを作成すると、次のようなDHCPサーバーが構築されます。
+
+```
+VBoxManage dhcpserver modify --netname "HostInterfaceNetworking-VirtualBox Host-Only Ethernet Adapter" --ip 192.168.56.2 --netmask  255.255.255.0 --lowerip 192.168.56.3 --upperip 192.168.56.254 --enable
+```
+
+この DHCPサーバーの構成は、VBoxManage で変更できるものの、Vagrant では `--ip 192.168.56.2 --netmask  255.255.255.0 --lowerip 192.168.56.3 --upperip 192.168.56.254` のみ、利用可能な DHCP サーバーとして認識します（つまり、DHCPサーバーの構成は変更できません）。
