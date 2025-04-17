@@ -13,4 +13,10 @@ Vagrant.configure("2") do |config|
     vb.cpus = 2
   end
 
+  config.vm.provision "shell", inline: <<-SHELL
+    echo 'vagrant:vagrant' | chpasswd
+  SHELL
+ 
+  config.vm.provision :shell, :path => "bootstraps/default.sh"
+
 end
