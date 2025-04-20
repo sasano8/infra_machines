@@ -75,6 +75,43 @@ vagrant reload
 ```
 
 
+# SSHを構成する
+
+`vagrant ssh` でなく、通常の ssh を利用する場合は以下の手順に従います。
+この手順は、Windows 上に配置された秘密鍵をWSL2上で利用するケースを想定しています。
+
+秘密鍵の場所を確認します。
+
+```
+vagrant ssh-config
+```
+
+秘密鍵をコピーする。
+
+```
+cp <秘密鍵のパス> ~/.ssh/vagrant_private_key  # Drvfs 上では chmod が効かないので（カスタムすれば可能らしい）、linux 上に持ってくる
+chmod 600 ~/.ssh/vagrant_private_key
+```
+
+接続情報を定義する。
+
+```
+cat << EOF >> ~/.ssh/config
+Host primary
+  HostName 192.168.56.2
+  User vagrant
+  IdentityFile ~/.ssh/vagrant_private_key
+  PasswordAuthentication no
+EOF
+```
+
+接続する。
+
+```
+ssh primary
+```
+
+
 # 既知の問題
 
 Vagrant で dhcp 構成のマシンを作成すると、次のようなDHCPサーバーが構築されます。
