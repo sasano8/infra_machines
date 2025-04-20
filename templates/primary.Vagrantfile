@@ -16,8 +16,12 @@ Vagrant.configure("2") do |config|
     echo 'vagrant:vagrant' | chpasswd
   SHELL
  
+  config.vm.synced_folder "bootstraps", "/bootstraps"
   config.vm.provision "shell",
     privileged: false,
-    path: "bootstraps/00_default.sh"
+    inline: <<-SHELL
+      /bootstraps/00_default.sh
+      /bootstraps/01_microk8s.sh "192.168.56.2"
+    SHELL
 
 end
